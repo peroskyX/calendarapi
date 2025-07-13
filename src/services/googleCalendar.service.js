@@ -167,7 +167,7 @@ async function stopWebhookForUser(userId) {
   const webhook = await Webhook.findOne({ userId });
   if (webhook) {
     const oAuth2Client = await getOAuth2Client(userId);
-    const calendar = google.calendar({ version: 'v3', auth: oAuth2Clien });
+    const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
     try {
       await calendar.channels.stop({
         requestBody: {

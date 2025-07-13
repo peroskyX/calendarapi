@@ -1,17 +1,28 @@
 const mongoose = require('mongoose');
-const { User, Event } = require('../models');
+const { User, Event, Webhook } = require('../models');
 
 // Load MongoDB URI from environment variables
 const MONGO_URI = process.env.MONGO_URI;
 
 // A helper function to drop an old index if it exists.
-const dropIndex = async () => {
+const dropLegacyIndexes = async () => {
     try {
+      // Drop the old Event index
       await Event.collection.dropIndex('googleEventId_1');
       console.log('Successfully dropped legacy googleEventId_1 index.');
     } catch (error) {
       if (error.codeName !== 'IndexNotFound') {
-        console.error('Error dropping index:', error);
+        console.error('Error dropping Event index:', error);
+      }
+    }
+
+    try {
+      // Drop the problematic webhookId index
+      await Webhook.collection.dropIndex('webhookId_1');
+      console.log('Successfully dropped legacy webhookId_1 index.');
+    } catch (error) {
+      if (error.codeName !== 'IndexNotFound') {
+        console.error('Error dropping Webhook index:', error);
       }
     }
 };

@@ -36,7 +36,7 @@ const getEvents = async (req, res) => {
       startDateTime: { $gte: startTimeISO },
       endDateTime: { $lte: endTimeISO },
     });
-    res.json(events);
+    res.json({ events, count: events.length });
 
   } catch (error) {
     console.error('Error fetching events:', error);
