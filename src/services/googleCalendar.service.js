@@ -162,6 +162,41 @@ async function renewExpiringWebhooks() {
   }
 }
 
+/**
+ * Clean up all existing webhooks on startup to prevent orphaned channels
+ */
+async function cleanupAllWebhooks() {
+  try {
+    const webhooks = await Webhook.find({});
+    console.log(`Found ${webhooks.length} existing webhooks to clean up.`);
+    
+    for (const webhook of webhooks) {
+      try {
+        const oAuth2Client = await getOAuth2Client(webhook.userId);
+        const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
+        
+        await calendar.channels.stop({
+          requestBody: {
+            id: webhook.channelId,
+            resourceId: webhook.resourceId,
+          },
+        });
+        console.log(`Successfully stopped webhook channel: ${webhook.channelId}`);
+      } catch (error) {
+        if (error.code !== 404) { // Ignore "Not Found" errors
+          console.error(`Error stopping webhook channel ${webhook.channelId}:`, error);
+        }
+      }
+    }
+    
+    // Clear all webhook records from database
+    await Webhook.deleteMany({});
+    console.log('Cleared all webhook records from database.');
+  } catch (error) {
+    console.error('Error during webhook cleanup:', error);
+  }
+}
+
 /** Helper to stop a webhook for a user using MongoDB */
 async function stopWebhookForUser(userId) {
   const webhook = await Webhook.findOne({ userId });
@@ -190,4 +225,5 @@ module.exports = {
   establishWebhook,
   fetchAndSyncEvents,
   renewExpiringWebhooks,
+  cleanupAllWebhooks,
 };
